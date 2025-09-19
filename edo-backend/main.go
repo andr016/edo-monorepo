@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -49,8 +50,14 @@ func registerUser(db *sql.DB, username, password string) error {
 	if err != nil {
 		return err
 	}
+	query, args, err := squirrel.
+		Insert("private.users").
+		Columns("username", "password_hash").
+		Values(username, passwordHash).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	_, err = db.Exec(query, args...)
 
-	_, err = db.Exec("INSERT INTO private.users (username, password_hash) VALUES ($1, $2)", username, passwordHash)
 	return err
 }
 
