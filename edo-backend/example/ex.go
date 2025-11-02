@@ -1,15 +1,13 @@
-package main
+package example
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/gofiber/fiber/v2"
-	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -20,7 +18,7 @@ type Config struct {
 	DBName     string `json:"dbName"`
 }
 
-func loadConfig() (Config, error) {
+func LoadConfig() (Config, error) {
 	var config Config
 	data, err := ioutil.ReadFile("config.json")
 	if err != nil {
@@ -30,7 +28,7 @@ func loadConfig() (Config, error) {
 	return config, err
 }
 
-func connectDB(config Config) (*sql.DB, error) {
+func ConnectDB(config Config) (*sql.DB, error) {
 	connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", config.DBUser, config.DBPassword, config.DBName)
 	return sql.Open("postgres", connStr)
 }
@@ -45,7 +43,7 @@ func checkPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func registerUser(db *sql.DB, username, password string) error {
+func RegisterUser(db *sql.DB, username, password string) error {
 	passwordHash, err := hashPassword(password)
 	if err != nil {
 		return err
@@ -76,7 +74,7 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func loginHandler(db *sql.DB) fiber.Handler {
+func LoginHandler(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req LoginRequest
 		if err := c.BodyParser(&req); err != nil {
@@ -101,34 +99,5 @@ func loginHandler(db *sql.DB) fiber.Handler {
 				"error": "Authentication failed!",
 			})
 		}
-	}
-}
-
-func main() {
-	app := fiber.New()
-
-	config, err := loadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	db, err := connectDB(config)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// Register a new user for demonstration
-	err = registerUser(db, "exampleUser", "examplePassword")
-	if err != nil {
-		log.Fatalf("Error registering user: %v", err)
-	}
-
-	// Set up the login route
-	app.Post("/login", loginHandler(db))
-
-	fmt.Println("Starting server on :8080...")
-	if err := app.Listen(":8080"); err != nil {
-		log.Fatal(err)
 	}
 }

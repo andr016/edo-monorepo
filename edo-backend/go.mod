@@ -1,15 +1,15 @@
-module go_authn
+module admin-panel
 
 go 1.24.2
 
 require (
+	github.com/Masterminds/squirrel v1.5.4
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/lib/pq v1.10.9
 	golang.org/x/crypto v0.37.0
 )
 
 require (
-	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
