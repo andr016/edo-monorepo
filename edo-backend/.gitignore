@@ -1,2 +1,5 @@
 config.json
 *.exe
+.env
+.vscode
+.idea

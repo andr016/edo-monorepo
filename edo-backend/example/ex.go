@@ -4,14 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/doug-martin/goqu/v9"
 	"io/ioutil"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Config structure for database configuration
 type Config struct {
 	DBUser     string `json:"dbUser"`
 	DBPassword string `json:"dbPassword"`
@@ -43,20 +42,19 @@ func checkPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func RegisterUser(db *sql.DB, username, password string) error {
+func RegisterUser(db *sql.DB, username, password string) (string, error) {
 	passwordHash, err := hashPassword(password)
-	if err != nil {
-		return err
+	record := goqu.Record{
+		"username":      username,
+		"password_hash": passwordHash,
 	}
-	query, args, err := squirrel.
-		Insert("private.users").
-		Columns("username", "password_hash").
-		Values(username, passwordHash).
-		PlaceholderFormat(squirrel.Dollar).
-		ToSql()
-	_, err = db.Exec(query, args...)
 
-	return err
+	query, _, err := goqu.Dialect("postgres").
+		Insert("private.users").
+		Rows(record).
+		ToSQL()
+
+	return query, err
 }
 
 func authenticateUser(db *sql.DB, username, password string) (bool, error) {
@@ -68,7 +66,6 @@ func authenticateUser(db *sql.DB, username, password string) (bool, error) {
 	return checkPasswordHash(password, hashedPassword), nil
 }
 
-// Struct to handle login requests
 type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
